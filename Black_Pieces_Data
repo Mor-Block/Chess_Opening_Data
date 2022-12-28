@@ -1,0 +1,29 @@
+import requests
+from bs4 import BeautifulSoup
+
+def get_common_openings(username, opening):
+  # Retrieves the user's profile page on chess.com
+  response = requests.get(f"https://www.chess.com/member/{username}")
+  soup = BeautifulSoup(response.text, "html.parser")
+
+  # Uses Beautiful Soup to parse the page and find the openings section
+  openings_section = soup.find("div", {"id": "openings"})
+  if not openings_section:
+    return None
+
+  # Finds the table containing the user's responses to the given opening as black
+  openings_table = openings_section.find("table", {"class": "openings black"})
+
+  # Extracts the rows of the table, which contain the openings and their frequencies
+  openings_rows = openings_table.find_all("tr")[1:]
+
+  # Extract the openings and their frequencies from the rows and sort them by frequency
+  openings = [(row.find("td", {"class": "opening"}).text, int(row.find("td", {"class": "games"}).text)) for row in openings_rows if row.find("td", {"class": "vs"}).text == opening]
+  openings.sort(key=lambda x: x[1], reverse=True)
+
+  # Return the top 3 openings
+  return openings[:3]
+
+# Test, must be given first move
+common_openings = get_common_openings("chesscom", "e4")
+print(f"Most common openings as black in response to e4: {common_openings}")
